@@ -1,23 +1,32 @@
-import { AuthState, User } from '@/types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { AuthState, User } from "@/types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<boolean>;
-  signUp: (email: string, password: string, name: string, userType: 'normal' | 'enterprise') => Promise<boolean>;
+  signUp: (
+    email: string,
+    password: string,
+    name: string,
+    userType: "normal" | "enterprise"
+  ) => Promise<boolean>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-setAuthState({
-          isAuthenticated: true
-        });
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -40,9 +49,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const loadAuthState = async () => {
     try {
-      const token = await SecureStore.getItemAsync('auth_token');
-      const userData = await AsyncStorage.getItem('user_data');
-      
+      const token = await SecureStore.getItemAsync("auth_token");
+      const userData = await AsyncStorage.getItem("user_data");
+
       if (token && userData) {
         const user = JSON.parse(userData);
         setAuthState({
@@ -52,11 +61,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           token,
         });
       } else {
-        setAuthState(prev => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
       }
     } catch (error) {
-      console.error('Error loading auth state:', error);
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      console.error("Error loading auth state:", error);
+      setAuthState((prev) => ({ ...prev, isLoading: false }));
     }
   };
 
@@ -65,19 +74,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Simulate API call - replace with actual authentication
       if (email && password) {
         const mockUser: User = {
-          id: '1',
+          id: "1",
           email,
-          name: email.split('@')[0],
-          userType: 'normal',
-          subscriptionTier: 'free',
+          name: email.split("@")[0],
+          userType: "normal",
+          subscriptionTier: "free",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
 
-        const mockToken = 'mock_jwt_token';
+        const mockToken = "mock_jwt_token";
 
-        await SecureStore.setItemAsync('auth_token', mockToken);
-        await AsyncStorage.setItem('user_data', JSON.stringify(mockUser));
+        await SecureStore.setItemAsync("auth_token", mockToken);
+        await AsyncStorage.setItem("user_data", JSON.stringify(mockUser));
 
         setAuthState({
           user: mockUser,
@@ -90,7 +99,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return false;
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error("Sign in error:", error);
       return false;
     }
   };
@@ -99,7 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     email: string,
     password: string,
     name: string,
-    userType: 'normal' | 'enterprise'
+    userType: "normal" | "enterprise"
   ): Promise<boolean> => {
     try {
       // Simulate API call - replace with actual registration
@@ -109,15 +118,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           email,
           name,
           userType,
-          subscriptionTier: userType === 'enterprise' ? 'enterprise' : 'free',
+          subscriptionTier: userType === "enterprise" ? "enterprise" : "free",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
 
-        const mockToken = 'mock_jwt_token';
+        const mockToken = "mock_jwt_token";
 
-        await SecureStore.setItemAsync('auth_token', mockToken);
-        await AsyncStorage.setItem('user_data', JSON.stringify(mockUser));
+        await SecureStore.setItemAsync("auth_token", mockToken);
+        await AsyncStorage.setItem("user_data", JSON.stringify(mockUser));
 
         setAuthState({
           user: mockUser,
@@ -130,17 +139,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return false;
     } catch (error) {
-      console.error('Sign up error:', error);
+      console.error("Sign up error:", error);
       return false;
     }
   };
 
   const signOut = async (): Promise<void> => {
     try {
-      await SecureStore.deleteItemAsync('auth_token');
-      await AsyncStorage.removeItem('user_data');
-      await AsyncStorage.removeItem('dashboard_layout');
-      await AsyncStorage.removeItem('user_settings');
+      await SecureStore.deleteItemAsync("auth_token");
+      await AsyncStorage.removeItem("user_data");
+      await AsyncStorage.removeItem("dashboard_layout");
+      await AsyncStorage.removeItem("user_settings");
 
       setAuthState({
         user: null,
@@ -149,17 +158,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         token: null,
       });
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error("Sign out error:", error);
     }
   };
 
   const resetPassword = async (email: string): Promise<boolean> => {
     try {
       // Simulate API call - replace with actual password reset
-      console.log('Password reset requested for:', email);
+      console.log("Password reset requested for:", email);
       return true;
     } catch (error) {
-      console.error('Password reset error:', error);
+      console.error("Password reset error:", error);
       return false;
     }
   };
