@@ -50,17 +50,12 @@ export default function DashboardScreen() {
     );
   };
 
-  const handleDragEnd = async ({ data }: { data: Widget[] }) => {
-    // Create a new array to avoid mutating state
+  const handleDragEnd = ({ data }: { data: Widget[] }) => {
     const updatedWidgets = data.map((widget, index) => ({
       ...widget,
       position: index,
     }));
-    try {
-      await updateWidgetLayout(updatedWidgets);
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to update widget layout.');
-    }
+    updateWidgetLayout(updatedWidgets);
   };
 
   const renderWidget = ({ item, drag, isActive }: RenderItemParams<Widget>) => {
@@ -83,11 +78,11 @@ export default function DashboardScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.toggleButton}
-                onPress={async () => {
+                onPress={() => {
                   try {
-                    await toggleWidget(item.id, !item.isEnabled);
-                  } catch (error: any) {
-                    Alert.alert('Error', error?.message || 'Failed to toggle widget.');
+                    toggleWidget(item.id, !item.isEnabled);
+                  } catch (error) {
+                    Alert.alert('Error', (error as Error).message);
                   }
                 }}
               >
@@ -100,19 +95,19 @@ export default function DashboardScreen() {
             </View>
           )}
 
-          {item.type === 'stats' && item.data ? (
+          {item.type === 'stats' && item.data && (
             <StatsWidget data={item.data} />
-          ) : null}
-          {item.type === 'calendar' && item.data ? (
+          )}
+          {item.type === 'calendar' && item.data && (
             <CalendarWidget data={item.data} />
-          ) : null}
-          {item.type === 'placeholder' ? (
+          )}
+          {item.type === 'placeholder' && (
             <PlaceholderWidget
               title={item.title}
               isPremium={item.isPremium}
               onUpgrade={canUpgrade ? handleUpgrade : undefined}
             />
-          ) : null}
+          )}
         </TouchableOpacity>
       </ScaleDecorator>
     );
