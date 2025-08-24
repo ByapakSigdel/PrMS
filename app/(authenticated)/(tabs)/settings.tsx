@@ -3,14 +3,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import React, { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Image,
+  Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -18,7 +23,19 @@ import {
 export default function SettingsScreen() {
   const { theme, themeId, setTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const { updateUser } = useAuth();
   const [notifications, setNotifications] = useState(true);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState(user?.name || '');
+  const [editEmail, setEditEmail] = useState(user?.email || '');
+  const [imageUri, setImageUri] = useState<string | undefined>(user?.profilePicture);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setEditName(user?.name || '');
+    setEditEmail(user?.email || '');
+    setImageUri(user?.profilePicture);
+  }, [user]);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -48,7 +65,59 @@ export default function SettingsScreen() {
   };
 
   const handleEditProfile = () => {
-    Alert.alert('Edit Profile', 'Profile editing will be available soon!');
+    setShowEditModal(true);
+  };
+
+  const pickImage = async () => {
+    try {
+      if (!ImagePicker || typeof ImagePicker.launchImageLibraryAsync !== 'function') {
+        Alert.alert(
+          'Image Picker not available',
+          'expo-image-picker is not available at runtime. Run `npx expo install expo-image-picker` and restart the app.'
+        );
+        return;
+      }
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission required', 'Permission to access photos is required to choose a profile picture.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+
+      // Newer expo-image-picker returns { canceled: boolean, assets: [{ uri }] }
+      if (!result.canceled) {
+        const uri = result.assets && result.assets[0]?.uri;
+        if (uri) setImageUri(uri);
+      }
+    } catch (error) {
+      console.error('Image pick error:', error);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const patched: any = { name: editName, email: editEmail };
+      if (imageUri) patched.profilePicture = imageUri;
+      const updated = await updateUser(patched);
+      if (updated) {
+        setShowEditModal(false);
+        if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(()=>{});
+      } else {
+        Alert.alert('Save failed', 'Could not update profile locally.');
+      }
+    } catch (error) {
+      console.error('Save profile error:', error);
+      Alert.alert('Error', 'An error occurred while saving your profile.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const styles = StyleSheet.create({
@@ -218,9 +287,11 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.profileImage} onPress={handleEditProfile}>
-          <Text style={styles.profileImageText}>
-            {getInitials(user?.name || 'User')}
-          </Text>
+          {user?.profilePicture ? (
+            <Image source={{ uri: user.profilePicture }} style={{ width: 80, height: 80, borderRadius: 40 }} />
+          ) : (
+            <Text style={styles.profileImageText}>{getInitials(user?.name || 'User')}</Text>
+          )}
         </TouchableOpacity>
         <Text style={styles.userName}>{user?.name}</Text>
         <Text style={styles.userEmail}>{user?.email}</Text>
@@ -249,6 +320,63 @@ export default function SettingsScreen() {
             <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         </View>
+
+        <Modal visible={showEditModal} animationType="slide" onRequestClose={() => setShowEditModal(false)}>
+          <View style={[styles.container, { padding: 20 }]}> 
+            <Text style={[styles.sectionTitle, { paddingTop: 0 }]}>Edit Profile</Text>
+            <TouchableOpacity onPress={pickImage} style={{ alignSelf: 'center', marginVertical: 12 }}>
+              {imageUri ? (
+                <Image source={{ uri: imageUri }} style={{ width: 120, height: 120, borderRadius: 60 }} />
+              ) : (
+                <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: 'white', fontSize: 36 }}>{getInitials(editName || 'U')}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <TextInput
+              value={editName}
+              onChangeText={setEditName}
+              placeholder="Full name"
+              style={{
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                padding: 12,
+                borderRadius: 8,
+                marginBottom: 12,
+                color: theme.colors.text,
+              }}
+              placeholderTextColor={theme.colors.textSecondary}
+            />
+
+            <TextInput
+              value={editEmail}
+              onChangeText={setEditEmail}
+              placeholder="Email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={{
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                padding: 12,
+                borderRadius: 8,
+                marginBottom: 12,
+                color: theme.colors.text,
+              }}
+              placeholderTextColor={theme.colors.textSecondary}
+            />
+
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Pressable onPress={() => setShowEditModal(false)} style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: theme.colors.border, alignItems: 'center' }}>
+                <Text style={{ color: theme.colors.text }}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={handleSaveProfile} disabled={isSaving} style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: theme.colors.primary, alignItems: 'center' }}>
+                <Text style={{ color: 'white' }}>{isSaving ? 'Saving...' : 'Save'}</Text>
+              </Pressable>
+            </View>
+
+          </View>
+        </Modal>
 
         {/* Theme Section */}
         <View style={styles.section}>

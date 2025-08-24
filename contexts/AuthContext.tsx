@@ -3,11 +3,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from 'expo-haptics';
 import * as SecureStore from "expo-secure-store";
 import React, {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
 import { Platform } from 'react-native';
 
@@ -21,6 +21,7 @@ interface AuthContextType extends AuthState {
   ) => Promise<boolean>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<boolean>;
+  updateUser: (patch: Partial<User>) => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,6 +69,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error("Error loading auth state:", error);
       setAuthState((prev) => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  const updateUser = async (patch: Partial<User>): Promise<User | null> => {
+    try {
+      const current = authState.user;
+      if (!current) return null;
+      const updated: User = {
+        ...current,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem("user_data", JSON.stringify(updated));
+      setAuthState((prev) => ({ ...(prev as any), user: updated }));
+      return updated;
+    } catch (error) {
+      console.error('updateUser error:', error);
+      return null;
     }
   };
 
@@ -182,6 +201,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     <AuthContext.Provider
       value={{
         ...authState,
+  updateUser,
         signIn,
         signUp,
         signOut,
