@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -46,7 +47,7 @@ export default function SignUpScreen() {
       const success = await signUp(email, password, name, userType);
       if (success) {
         Alert.alert('Success', 'Account created successfully!', [
-          { text: 'OK', onPress: () => router.replace('/dashboard') }
+          { text: 'OK', onPress: () => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.replace('/dashboard'); } }
         ]);
       } else {
         Alert.alert('Error', 'Failed to create account');
@@ -259,7 +260,7 @@ export default function SignUpScreen() {
 
         <TouchableOpacity
           style={styles.linkButton}
-          onPress={() => router.back()}
+          onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
         >
           <Text style={styles.linkText}>Already have an account? Sign In</Text>
         </TouchableOpacity>

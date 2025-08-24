@@ -1,13 +1,15 @@
 import { AuthState, User } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Haptics from 'expo-haptics';
 import * as SecureStore from "expo-secure-store";
 import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
+    createContext,
+    ReactNode,
+    useContext,
+    useEffect,
+    useState,
 } from "react";
+import { Platform } from 'react-native';
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<boolean>;
@@ -146,6 +148,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async (): Promise<void> => {
     try {
+      if (Platform.OS !== 'web') {
+        try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+      }
       await SecureStore.deleteItemAsync("auth_token");
       await AsyncStorage.removeItem("user_data");
       await AsyncStorage.removeItem("dashboard_layout");

@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -30,11 +31,14 @@ export default function ForgotPasswordScreen() {
     try {
       const success = await resetPassword(email);
       if (success) {
-        Alert.alert(
-          'Success',
-          'Password reset instructions have been sent to your email.',
-          [{ text: 'OK', onPress: () => router.back() }]
-        );
+      Alert.alert(
+        'Success',
+        'Password reset instructions have been sent to your email.',
+        [{ text: 'OK', onPress: () => {
+          if (Platform.OS !== 'web') Haptics.selectionAsync();
+          router.back();
+        } }]
+      );
       } else {
         Alert.alert('Error', 'Failed to send reset instructions');
       }
@@ -137,7 +141,7 @@ export default function ForgotPasswordScreen() {
 
         <TouchableOpacity
           style={styles.linkButton}
-          onPress={() => router.back()}
+          onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
         >
           <Text style={styles.linkText}>Back to Sign In</Text>
         </TouchableOpacity>
