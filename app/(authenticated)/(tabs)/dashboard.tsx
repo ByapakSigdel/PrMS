@@ -8,17 +8,17 @@ import { Widget } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    Alert,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import DraggableFlatList, {
-    RenderItemParams,
-    ScaleDecorator,
+  RenderItemParams,
+  ScaleDecorator,
 } from 'react-native-draggable-flatlist';
 
 export default function DashboardScreen() {
@@ -50,12 +50,17 @@ export default function DashboardScreen() {
     );
   };
 
-  const handleDragEnd = ({ data }: { data: Widget[] }) => {
+  const handleDragEnd = async ({ data }: { data: Widget[] }) => {
+    // Create a new array to avoid mutating state
     const updatedWidgets = data.map((widget, index) => ({
       ...widget,
       position: index,
     }));
-    updateWidgetLayout(updatedWidgets);
+    try {
+      await updateWidgetLayout(updatedWidgets);
+    } catch (error: any) {
+      Alert.alert('Error', error?.message || 'Failed to update widget layout.');
+    }
   };
 
   const renderWidget = ({ item, drag, isActive }: RenderItemParams<Widget>) => {
@@ -78,11 +83,11 @@ export default function DashboardScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.toggleButton}
-                onPress={() => {
+                onPress={async () => {
                   try {
-                    toggleWidget(item.id, !item.isEnabled);
-                  } catch (error) {
-                    Alert.alert('Error', (error as Error).message);
+                    await toggleWidget(item.id, !item.isEnabled);
+                  } catch (error: any) {
+                    Alert.alert('Error', error?.message || 'Failed to toggle widget.');
                   }
                 }}
               >
@@ -95,19 +100,19 @@ export default function DashboardScreen() {
             </View>
           )}
 
-          {item.type === 'stats' && item.data && (
+          {item.type === 'stats' && item.data ? (
             <StatsWidget data={item.data} />
-          )}
-          {item.type === 'calendar' && item.data && (
+          ) : null}
+          {item.type === 'calendar' && item.data ? (
             <CalendarWidget data={item.data} />
-          )}
-          {item.type === 'placeholder' && (
+          ) : null}
+          {item.type === 'placeholder' ? (
             <PlaceholderWidget
               title={item.title}
               isPremium={item.isPremium}
               onUpgrade={canUpgrade ? handleUpgrade : undefined}
             />
-          )}
+          ) : null}
         </TouchableOpacity>
       </ScaleDecorator>
     );
