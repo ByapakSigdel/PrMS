@@ -20,8 +20,10 @@ import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
 } from 'react-native-draggable-flatlist';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function DashboardScreen() {
+  const insets = useSafeAreaInsets();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { theme } = useTheme();
@@ -204,7 +206,7 @@ export default function DashboardScreen() {
 
   if (isEditMode) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: insets.bottom }]}> 
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <View>
@@ -233,14 +235,14 @@ export default function DashboardScreen() {
           onDragEnd={handleDragEnd}
           keyExtractor={(item) => item.id}
           renderItem={renderWidget}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 16 + insets.bottom }]}
         />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}> 
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View>
@@ -266,7 +268,7 @@ export default function DashboardScreen() {
 
       <ScrollView
         style={styles.content}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 16 + insets.bottom }]}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
         }
