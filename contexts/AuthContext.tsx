@@ -1,15 +1,15 @@
 import { AuthState, User } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Haptics from 'expo-haptics';
+import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import React, {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
-import { Platform } from 'react-native';
+import { Platform } from "react-native";
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<boolean>;
@@ -21,6 +21,7 @@ interface AuthContextType extends AuthState {
   ) => Promise<boolean>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<boolean>;
+  updateProfile: (updates: Partial<User>) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -148,8 +149,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async (): Promise<void> => {
     try {
-      if (Platform.OS !== 'web') {
-        try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+      if (Platform.OS !== "web") {
+        try {
+          await Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Success
+          );
+        } catch {}
       }
       await SecureStore.deleteItemAsync("auth_token");
       await AsyncStorage.removeItem("user_data");
@@ -164,6 +169,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
     } catch (error) {
       console.error("Sign out error:", error);
+    }
+  };
+
+  const updateProfile = async (updates: Partial<User>): Promise<boolean> => {
+    try {
+      if (!authState.user) return false;
+      const updatedUser: User = {
+        ...authState.user,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
+
+      setAuthState((prev) => ({
+        ...prev,
+        user: updatedUser,
+      }));
+
+      return true;
+    } catch (error) {
+      console.error("Update profile error:", error);
+      return false;
     }
   };
 
@@ -182,6 +210,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     <AuthContext.Provider
       value={{
         ...authState,
+        updateProfile,
         signIn,
         signUp,
         signOut,

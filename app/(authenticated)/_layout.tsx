@@ -1,5 +1,5 @@
-import { useTheme } from '@/contexts/ThemeContext';
-import { Stack } from 'expo-router';
+import { useTheme } from "@/contexts/ThemeContext";
+import { Stack } from "expo-router";
 
 export default function AuthenticatedLayout() {
   const { theme } = useTheme();
@@ -12,7 +12,7 @@ export default function AuthenticatedLayout() {
         },
         headerTintColor: theme.colors.text,
         headerTitleStyle: {
-          fontWeight: 'bold',
+          fontWeight: "bold",
         },
         headerShadowVisible: false,
       }}
@@ -23,6 +23,8 @@ export default function AuthenticatedLayout() {
           headerShown: false,
         }}
       />
+      // edit-profile is nested under the Settings folder; presentation handled
+      by file-based route
     </Stack>
   );
 }

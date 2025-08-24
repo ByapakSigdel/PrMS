@@ -1,9 +1,10 @@
-import { themes } from '@/constants/Themes';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import React, { useState } from 'react';
+import { themes } from "@/constants/Themes";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
   Alert,
   Platform,
@@ -13,7 +14,7 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
 export default function SettingsScreen() {
   const { theme, themeId, setTheme } = useTheme();
@@ -21,34 +22,45 @@ export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel', onPress: () => {
-            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          } },
-        { text: 'Sign Out', style: 'destructive', onPress: async () => {
-            if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            await signOut();
-          } },
-      ]
-    );
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+        onPress: () => {
+          if (Platform.OS !== "web")
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        },
+      },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: async () => {
+          if (Platform.OS !== "web")
+            await Haptics.notificationAsync(
+              Haptics.NotificationFeedbackType.Warning
+            );
+          await signOut();
+        },
+      },
+    ]);
   };
 
   const handleUpgrade = () => {
     Alert.alert(
-      'Upgrade Account',
-      'Choose your subscription plan to unlock premium features.',
+      "Upgrade Account",
+      "Choose your subscription plan to unlock premium features.",
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'View Plans', onPress: () => console.log('Navigate to subscription') },
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "View Plans",
+          onPress: () => console.log("Navigate to subscription"),
+        },
       ]
     );
   };
 
   const handleEditProfile = () => {
-    Alert.alert('Edit Profile', 'Profile editing will be available soon!');
+    router.push("/(authenticated)/(tabs)/settings.edit-profile");
   };
 
   const styles = StyleSheet.create({
@@ -62,25 +74,25 @@ export default function SettingsScreen() {
       backgroundColor: theme.colors.surface,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
-      alignItems: 'center',
+      alignItems: "center",
     },
     profileImage: {
       width: 80,
       height: 80,
       borderRadius: 40,
       backgroundColor: theme.colors.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       marginBottom: 12,
     },
     profileImageText: {
       fontSize: 32,
-      fontWeight: 'bold',
-      color: 'white',
+      fontWeight: "bold",
+      color: "white",
     },
     userName: {
       fontSize: 24,
-      fontWeight: 'bold',
+      fontWeight: "bold",
       color: theme.colors.text,
       marginBottom: 4,
     },
@@ -96,10 +108,10 @@ export default function SettingsScreen() {
       borderRadius: 12,
     },
     userTypeText: {
-      color: 'white',
+      color: "white",
       fontSize: 12,
-      fontWeight: '600',
-      textTransform: 'capitalize',
+      fontWeight: "600",
+      textTransform: "capitalize",
     },
     content: {
       flex: 1,
@@ -109,18 +121,18 @@ export default function SettingsScreen() {
       marginTop: 16,
       marginHorizontal: 16,
       borderRadius: 12,
-      overflow: 'hidden',
+      overflow: "hidden",
     },
     sectionTitle: {
       fontSize: 18,
-      fontWeight: 'bold',
+      fontWeight: "bold",
       color: theme.colors.text,
       padding: 16,
       paddingBottom: 8,
     },
     settingItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       padding: 16,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
@@ -136,7 +148,7 @@ export default function SettingsScreen() {
     },
     settingTitle: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.colors.text,
       marginBottom: 2,
     },
@@ -147,10 +159,10 @@ export default function SettingsScreen() {
     settingValue: {
       fontSize: 14,
       color: theme.colors.primary,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     themeOptions: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 12,
       padding: 16,
     },
@@ -159,9 +171,9 @@ export default function SettingsScreen() {
       backgroundColor: theme.colors.background,
       borderRadius: 8,
       padding: 12,
-      alignItems: 'center',
+      alignItems: "center",
       borderWidth: 2,
-      borderColor: 'transparent',
+      borderColor: "transparent",
     },
     themeOptionSelected: {
       borderColor: theme.colors.primary,
@@ -174,7 +186,7 @@ export default function SettingsScreen() {
     },
     themeOptionText: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.colors.text,
     },
     upgradeButton: {
@@ -183,12 +195,12 @@ export default function SettingsScreen() {
       marginTop: 8,
       borderRadius: 12,
       padding: 16,
-      alignItems: 'center',
+      alignItems: "center",
     },
     upgradeButtonText: {
-      color: 'white',
+      color: "white",
       fontSize: 16,
-      fontWeight: 'bold',
+      fontWeight: "bold",
     },
     signOutButton: {
       backgroundColor: theme.colors.error,
@@ -196,20 +208,20 @@ export default function SettingsScreen() {
       marginTop: 8,
       borderRadius: 12,
       padding: 16,
-      alignItems: 'center',
+      alignItems: "center",
     },
     signOutButtonText: {
-      color: 'white',
+      color: "white",
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
     },
   });
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -217,9 +229,12 @@ export default function SettingsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.profileImage} onPress={handleEditProfile}>
+        <TouchableOpacity
+          style={styles.profileImage}
+          onPress={handleEditProfile}
+        >
           <Text style={styles.profileImageText}>
-            {getInitials(user?.name || 'User')}
+            {getInitials(user?.name || "User")}
           </Text>
         </TouchableOpacity>
         <Text style={styles.userName}>{user?.name}</Text>
@@ -235,7 +250,10 @@ export default function SettingsScreen() {
         {/* Profile Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Profile</Text>
-          <TouchableOpacity style={styles.settingItem} onPress={handleEditProfile}>
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={handleEditProfile}
+          >
             <Ionicons
               name="person-outline"
               size={24}
@@ -244,9 +262,15 @@ export default function SettingsScreen() {
             />
             <View style={styles.settingContent}>
               <Text style={styles.settingTitle}>Edit Profile</Text>
-              <Text style={styles.settingSubtitle}>Update your personal information</Text>
+              <Text style={styles.settingSubtitle}>
+                Update your personal information
+              </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={theme.colors.textSecondary}
+            />
           </TouchableOpacity>
         </View>
 
@@ -287,23 +311,29 @@ export default function SettingsScreen() {
             />
             <View style={styles.settingContent}>
               <Text style={styles.settingTitle}>Notifications</Text>
-              <Text style={styles.settingSubtitle}>Receive push notifications</Text>
+              <Text style={styles.settingSubtitle}>
+                Receive push notifications
+              </Text>
             </View>
             <Switch
               value={notifications}
               onValueChange={setNotifications}
-              trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+              trackColor={{
+                false: theme.colors.border,
+                true: theme.colors.primary,
+              }}
               thumbColor="white"
             />
           </View>
         </View>
 
         {/* Subscription */}
-        {user?.subscriptionTier === 'free' && (
-          <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgrade}>
-            <Text style={styles.upgradeButtonText}>
-              ⭐ Upgrade to Premium
-            </Text>
+        {user?.subscriptionTier === "free" && (
+          <TouchableOpacity
+            style={styles.upgradeButton}
+            onPress={handleUpgrade}
+          >
+            <Text style={styles.upgradeButtonText}>⭐ Upgrade to Premium</Text>
           </TouchableOpacity>
         )}
 
