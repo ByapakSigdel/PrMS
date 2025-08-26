@@ -4,6 +4,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
+import * as Notifications from 'expo-notifications';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -19,6 +20,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
+// Set up notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function SettingsScreen() {
   const { theme, themeId, setTheme } = useTheme();
@@ -117,6 +128,41 @@ export default function SettingsScreen() {
       Alert.alert('Error', 'An error occurred while saving your profile.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSendNotification = async () => {
+    try {
+      // Request notification permissions
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required', 
+          'You need to enable notifications in your device settings to receive notifications.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Schedule a local notification
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Test Notification 📱",
+          body: "This is a test notification from PrMS app!",
+          data: { testData: 'some data' },
+        },
+        trigger: null, // Show immediately
+      });
+
+      // Show success feedback
+      if (Platform.OS !== 'web') {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      
+      Alert.alert('Success', 'Test notification sent!');
+    } catch (error) {
+      console.error('Notification error:', error);
+      Alert.alert('Error', 'Failed to send notification. Please try again.');
     }
   };
 
@@ -268,6 +314,19 @@ export default function SettingsScreen() {
       alignItems: 'center',
     },
     signOutButtonText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    notificationButton: {
+      backgroundColor: theme.colors.primary,
+      margin: 16,
+      marginTop: 8,
+      borderRadius: 12,
+      padding: 16,
+      alignItems: 'center',
+    },
+    notificationButtonText: {
       color: 'white',
       fontSize: 16,
       fontWeight: '600',
@@ -424,6 +483,19 @@ export default function SettingsScreen() {
               thumbColor="white"
             />
           </View>
+          <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]} onPress={handleSendNotification}>
+            <Ionicons
+              name="send-outline"
+              size={24}
+              color={theme.colors.primary}
+              style={styles.settingIcon}
+            />
+            <View style={styles.settingContent}>
+              <Text style={styles.settingTitle}>Send Test Notification</Text>
+              <Text style={styles.settingSubtitle}>Send a test notification to your device</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
         </View>
 
         {/* Subscription */}
