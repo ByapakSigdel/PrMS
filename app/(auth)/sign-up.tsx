@@ -1,59 +1,75 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import * as Haptics from "expo-haptics";
+import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function SignUpScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [userType, setUserType] = useState<'normal' | 'enterprise'>('normal');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
+  const [userType, setUserType] = useState<"normal" | "enterprise">("normal");
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useAuth();
   const { theme } = useTheme();
 
   const handleSignUp = async () => {
     if (!email || !password || !name || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      Alert.alert("Error", "Passwords do not match");
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      Alert.alert("Error", "Password must be at least 6 characters");
       return;
     }
 
     setIsLoading(true);
     try {
-      const success = await signUp(email, password, name, userType);
-      if (success) {
-        Alert.alert('Success', 'Account created successfully!', [
-          { text: 'OK', onPress: () => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.replace('/dashboard'); } }
+      const res = await fetch(
+        `${process.env.EXPO_PUBLIC_API_BASE}/auth/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, name, userType }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok && data.token) {
+        await SecureStore.setItemAsync("token", data.token);
+        Alert.alert("Success", "Account created successfully!", [
+          {
+            text: "OK",
+            onPress: () => {
+              if (Platform.OS !== "web") Haptics.selectionAsync();
+              router.replace("/dashboard");
+            },
+          },
         ]);
       } else {
-        Alert.alert('Error', 'Failed to create account');
+        Alert.alert("Error", data.message || "Failed to create account");
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred during registration');
+      Alert.alert("Error", "An error occurred during registration");
     } finally {
       setIsLoading(false);
     }
@@ -69,16 +85,16 @@ export default function SignUpScreen() {
     },
     title: {
       fontSize: 32,
-      fontWeight: 'bold',
+      fontWeight: "bold",
       color: theme.colors.text,
-      textAlign: 'center',
+      textAlign: "center",
       marginBottom: 8,
       marginTop: 40,
     },
     subtitle: {
       fontSize: 16,
       color: theme.colors.textSecondary,
-      textAlign: 'center',
+      textAlign: "center",
       marginBottom: 32,
     },
     input: {
@@ -96,12 +112,12 @@ export default function SignUpScreen() {
     },
     userTypeLabel: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.colors.text,
       marginBottom: 12,
     },
     userTypeOptions: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 12,
     },
     userTypeOption: {
@@ -117,16 +133,16 @@ export default function SignUpScreen() {
       backgroundColor: `${theme.colors.primary}15`,
     },
     userTypeOptionText: {
-      textAlign: 'center',
+      textAlign: "center",
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.colors.text,
     },
     userTypeOptionTextSelected: {
       color: theme.colors.primary,
     },
     userTypeDescription: {
-      textAlign: 'center',
+      textAlign: "center",
       fontSize: 12,
       color: theme.colors.textSecondary,
       marginTop: 4,
@@ -135,19 +151,19 @@ export default function SignUpScreen() {
       backgroundColor: theme.colors.primary,
       borderRadius: 12,
       padding: 16,
-      alignItems: 'center',
+      alignItems: "center",
       marginBottom: 16,
     },
     buttonDisabled: {
       opacity: 0.6,
     },
     buttonText: {
-      color: 'white',
+      color: "white",
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     linkButton: {
-      alignItems: 'center',
+      alignItems: "center",
       padding: 8,
       marginBottom: 40,
     },
@@ -160,11 +176,16 @@ export default function SignUpScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Join us and start managing your projects</Text>
+        <Text style={styles.subtitle}>
+          Join us and start managing your projects
+        </Text>
 
         <TextInput
           style={styles.input}
@@ -212,14 +233,14 @@ export default function SignUpScreen() {
             <TouchableOpacity
               style={[
                 styles.userTypeOption,
-                userType === 'normal' && styles.userTypeOptionSelected,
+                userType === "normal" && styles.userTypeOptionSelected,
               ]}
-              onPress={() => setUserType('normal')}
+              onPress={() => setUserType("normal")}
             >
               <Text
                 style={[
                   styles.userTypeOptionText,
-                  userType === 'normal' && styles.userTypeOptionTextSelected,
+                  userType === "normal" && styles.userTypeOptionTextSelected,
                 ]}
               >
                 Personal
@@ -229,14 +250,15 @@ export default function SignUpScreen() {
             <TouchableOpacity
               style={[
                 styles.userTypeOption,
-                userType === 'enterprise' && styles.userTypeOptionSelected,
+                userType === "enterprise" && styles.userTypeOptionSelected,
               ]}
-              onPress={() => setUserType('enterprise')}
+              onPress={() => setUserType("enterprise")}
             >
               <Text
                 style={[
                   styles.userTypeOptionText,
-                  userType === 'enterprise' && styles.userTypeOptionTextSelected,
+                  userType === "enterprise" &&
+                    styles.userTypeOptionTextSelected,
                 ]}
               >
                 Enterprise
@@ -260,7 +282,11 @@ export default function SignUpScreen() {
 
         <TouchableOpacity
           style={styles.linkButton}
-          onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
+          onPress={() => {
+            if (Platform.OS !== "web")
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.back();
+          }}
         >
           <Text style={styles.linkText}>Already have an account? Sign In</Text>
         </TouchableOpacity>
