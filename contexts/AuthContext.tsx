@@ -178,8 +178,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signIn = async (email: string, password: string): Promise<boolean> => {
-    // Your sign-in logic here
-    return false; // placeholder, replace with real logic
+    try {
+      const res = await fetch(
+        `${process.env.EXPO_PUBLIC_API_BASE}/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok && data.token && data.user) {
+        await SecureStore.setItemAsync("auth_token", data.token);
+        await AsyncStorage.setItem("user_data", JSON.stringify(data.user));
+        setAuthState({
+          user: data.user,
+          isAuthenticated: true,
+          isLoading: false,
+          token: data.token,
+        });
+        return true;
+      } else {
+        console.error("Sign in error:", data.message || "Failed to sign in");
+        return false;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+      return false;
+    }
   };
 
   return (

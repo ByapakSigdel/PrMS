@@ -2,6 +2,7 @@ import { themes } from "@/constants/Themes";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as Notifications from "expo-notifications";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Modal,
@@ -24,9 +25,9 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export default function SettingsScreen() {
   const { theme, themeId, setTheme } = useTheme();
-  const { user, signOut, updateUser } = useAuth();
+  const { user, signOut, updateUser, isLoading } = useAuth();
+  const router = useRouter();
   const [notifications, setNotifications] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState(user?.name || "");
@@ -40,7 +41,235 @@ export default function SettingsScreen() {
     setEditName(user?.name || "");
     setEditEmail(user?.email || "");
     setImageUri(user?.profilePicture);
-  }, [user]);
+    if (!user && !isLoading) {
+      router.replace("/sign-in");
+    }
+  }, [user, isLoading]);
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    header: {
+      padding: 20,
+      paddingTop: 60,
+      backgroundColor: theme.colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      alignItems: "center",
+    },
+    profileImage: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: theme.colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 12,
+    },
+    profileImageText: {
+      fontSize: 32,
+      fontWeight: "bold",
+      color: "white",
+    },
+    userName: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: theme.colors.text,
+      marginBottom: 4,
+    },
+    userEmail: {
+      fontSize: 16,
+      color: theme.colors.textSecondary,
+      marginBottom: 8,
+    },
+    userType: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    userTypeText: {
+      color: "white",
+      fontSize: 12,
+      fontWeight: "600",
+      textTransform: "capitalize",
+    },
+    content: {
+      flex: 1,
+    },
+    section: {
+      backgroundColor: theme.colors.surface,
+      marginTop: 16,
+      marginHorizontal: 16,
+      borderRadius: 12,
+      overflow: "hidden",
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: theme.colors.text,
+      padding: 16,
+      paddingBottom: 8,
+    },
+    settingItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    settingItemLast: {
+      borderBottomWidth: 0,
+    },
+    settingIcon: {
+      marginRight: 12,
+    },
+    settingContent: {
+      flex: 1,
+    },
+    settingTitle: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: theme.colors.text,
+      marginBottom: 2,
+    },
+    settingSubtitle: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+    },
+    settingValue: {
+      fontSize: 14,
+      color: theme.colors.primary,
+      fontWeight: "600",
+    },
+    themeOptions: {
+      flexDirection: "row",
+      gap: 12,
+      padding: 16,
+    },
+    themeOption: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+      borderRadius: 8,
+      padding: 12,
+      alignItems: "center",
+      borderWidth: 2,
+      borderColor: "transparent",
+    },
+    themeOptionSelected: {
+      borderColor: theme.colors.primary,
+    },
+    themePreview: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      marginBottom: 8,
+    },
+    themeOptionText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: theme.colors.text,
+    },
+    upgradeButton: {
+      backgroundColor: theme.colors.primary,
+      margin: 16,
+      marginTop: 8,
+      borderRadius: 12,
+      padding: 16,
+      alignItems: "center",
+    },
+    upgradeButtonText: {
+      color: "white",
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    signOutButton: {
+      backgroundColor: theme.colors.error,
+      margin: 16,
+      marginTop: 8,
+      borderRadius: 12,
+      padding: 16,
+      alignItems: "center",
+    },
+    signOutButtonText: {
+      color: "white",
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    notificationButton: {
+      backgroundColor: theme.colors.primary,
+      margin: 16,
+      marginTop: 8,
+      borderRadius: 12,
+      padding: 16,
+      alignItems: "center",
+    },
+    notificationButtonText: {
+      color: "white",
+      fontSize: 16,
+      fontWeight: "600",
+    },
+  });
+
+  // Handlers and helpers
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const handleUpgrade = () => {
+    // Placeholder for upgrade logic
+    alert("Upgrade to premium coming soon!");
+  };
+
+  const handleSendNotification = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Test Notification",
+        body: "This is a test notification!",
+      },
+      trigger: null,
+    });
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      await updateUser({
+        name: editName,
+        email: editEmail,
+        profilePicture: imageUri,
+      });
+      setShowEditModal(false);
+    } catch (e) {
+      alert("Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+export default function SettingsScreen() {
+  const { theme, themeId, setTheme } = useTheme();
+  const { user, signOut, updateUser, isLoading } = useAuth();
+  const router = useRouter();
+  const [notifications, setNotifications] = useState(true);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState(user?.name || "");
+  const [editEmail, setEditEmail] = useState(user?.email || "");
+  const [imageUri, setImageUri] = useState<string | undefined>(
+    user?.profilePicture
+  );
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setEditName(user?.name || "");
+    setEditEmail(user?.email || "");
+    setImageUri(user?.profilePicture);
+    if (!user && !isLoading) {
+      router.replace("/sign-in");
+    }
+  }, [user, isLoading]);
 
   const styles = StyleSheet.create({
     container: {
