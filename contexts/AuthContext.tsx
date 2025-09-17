@@ -1,6 +1,6 @@
 import { AuthState, User } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Haptics from 'expo-haptics';
+import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import React, {
   createContext,
@@ -9,7 +9,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { Platform } from 'react-native';
+import { Platform } from "react-native";
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<boolean>;
@@ -74,54 +74,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateUser = async (patch: Partial<User>): Promise<User | null> => {
     try {
-      const current = authState.user;
-      if (!current) return null;
-      const updated: User = {
-        ...current,
-        ...patch,
-        updatedAt: new Date().toISOString(),
-      };
-      await AsyncStorage.setItem("user_data", JSON.stringify(updated));
-      setAuthState((prev) => ({ ...(prev as any), user: updated }));
-      return updated;
-    } catch (error) {
-      console.error('updateUser error:', error);
-      return null;
-    }
-  };
-
-  const signIn = async (email: string, password: string): Promise<boolean> => {
-    try {
-      // Simulate API call - replace with actual authentication
-      if (email && password) {
-        const mockUser: User = {
-          id: "1",
-          email,
-          name: email.split("@")[0],
-          userType: "normal",
-          subscriptionTier: "free",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        const mockToken = "mock_jwt_token";
-
-        await SecureStore.setItemAsync("auth_token", mockToken);
-        await AsyncStorage.setItem("user_data", JSON.stringify(mockUser));
-
-        setAuthState({
-          user: mockUser,
-          isAuthenticated: true,
-          isLoading: false,
-          token: mockToken,
-        });
-
-        return true;
+      const token = authState.token;
+      if (!token) return null;
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_BASE}/auth/me`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json();
+      if (res.ok && data) {
+        await AsyncStorage.setItem("user_data", JSON.stringify(data));
+        setAuthState((prev) => ({ ...(prev as any), user: data }));
+        return data;
+      } else {
+        console.error(
+          "updateUser error:",
+          data.message || "Failed to update user"
+        );
+        return null;
       }
-      return false;
     } catch (error) {
-      console.error("Sign in error:", error);
-      return false;
+      console.error("updateUser error:", error);
+      return null;
     }
   };
 
@@ -132,33 +109,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     userType: "normal" | "enterprise"
   ): Promise<boolean> => {
     try {
-      // Simulate API call - replace with actual registration
-      if (email && password && name) {
-        const mockUser: User = {
-          id: Date.now().toString(),
-          email,
-          name,
-          userType,
-          subscriptionTier: userType === "enterprise" ? "enterprise" : "free",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        const mockToken = "mock_jwt_token";
-
-        await SecureStore.setItemAsync("auth_token", mockToken);
-        await AsyncStorage.setItem("user_data", JSON.stringify(mockUser));
-
+      const res = await fetch(
+        `${process.env.EXPO_PUBLIC_API_BASE}/auth/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, name, userType }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok && data.token && data.user) {
+        await SecureStore.setItemAsync("auth_token", data.token);
+        await AsyncStorage.setItem("user_data", JSON.stringify(data.user));
         setAuthState({
-          user: mockUser,
+          user: data.user,
           isAuthenticated: true,
           isLoading: false,
-          token: mockToken,
+          token: data.token,
         });
-
         return true;
+      } else {
+        console.error(
+          "Sign up error:",
+          data.message || "Failed to create account"
+        );
+        return false;
       }
-      return false;
     } catch (error) {
       console.error("Sign up error:", error);
       return false;
@@ -167,8 +143,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async (): Promise<void> => {
     try {
-      if (Platform.OS !== 'web') {
-        try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+      if (Platform.OS !== "web") {
+        try {
+          await Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Success
+          );
+        } catch {}
       }
       await SecureStore.deleteItemAsync("auth_token");
       await AsyncStorage.removeItem("user_data");
@@ -197,11 +177,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const signIn = async (email: string, password: string): Promise<boolean> => {
+    // Your sign-in logic here
+    return false; // placeholder, replace with real logic
+  };
+
   return (
     <AuthContext.Provider
       value={{
         ...authState,
-  updateUser,
+        updateUser,
         signIn,
         signUp,
         signOut,

@@ -1,17 +1,10 @@
-import { themes } from '@/constants/Themes';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
-import * as Notifications from 'expo-notifications';
-import React, { useEffect, useState } from 'react';
+import { themes } from "@/constants/Themes";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import * as Notifications from "expo-notifications";
+import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  Image,
   Modal,
-  Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Switch,
@@ -19,7 +12,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
 // Set up notification handler
 Notifications.setNotificationHandler({
@@ -33,138 +26,21 @@ Notifications.setNotificationHandler({
 
 export default function SettingsScreen() {
   const { theme, themeId, setTheme } = useTheme();
-  const { user, signOut } = useAuth();
-  const { updateUser } = useAuth();
+  const { user, signOut, updateUser } = useAuth();
   const [notifications, setNotifications] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editName, setEditName] = useState(user?.name || '');
-  const [editEmail, setEditEmail] = useState(user?.email || '');
-  const [imageUri, setImageUri] = useState<string | undefined>(user?.profilePicture);
+  const [editName, setEditName] = useState(user?.name || "");
+  const [editEmail, setEditEmail] = useState(user?.email || "");
+  const [imageUri, setImageUri] = useState<string | undefined>(
+    user?.profilePicture
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    setEditName(user?.name || '');
-    setEditEmail(user?.email || '');
+    setEditName(user?.name || "");
+    setEditEmail(user?.email || "");
     setImageUri(user?.profilePicture);
   }, [user]);
-
-  const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel', onPress: () => {
-            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          } },
-        { text: 'Sign Out', style: 'destructive', onPress: async () => {
-            if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            await signOut();
-          } },
-      ]
-    );
-  };
-
-  const handleUpgrade = () => {
-    Alert.alert(
-      'Upgrade Account',
-      'Choose your subscription plan to unlock premium features.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'View Plans', onPress: () => console.log('Navigate to subscription') },
-      ]
-    );
-  };
-
-  const handleEditProfile = () => {
-    setShowEditModal(true);
-  };
-
-  const pickImage = async () => {
-    try {
-      if (!ImagePicker || typeof ImagePicker.launchImageLibraryAsync !== 'function') {
-        Alert.alert(
-          'Image Picker not available',
-          'expo-image-picker is not available at runtime. Run `npx expo install expo-image-picker` and restart the app.'
-        );
-        return;
-      }
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Permission required', 'Permission to access photos is required to choose a profile picture.');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 0.7,
-        allowsEditing: true,
-        aspect: [1, 1],
-      });
-
-      // Newer expo-image-picker returns { canceled: boolean, assets: [{ uri }] }
-      if (!result.canceled) {
-        const uri = result.assets && result.assets[0]?.uri;
-        if (uri) setImageUri(uri);
-      }
-    } catch (error) {
-      console.error('Image pick error:', error);
-    }
-  };
-
-  const handleSaveProfile = async () => {
-    setIsSaving(true);
-    try {
-      const patched: any = { name: editName, email: editEmail };
-      if (imageUri) patched.profilePicture = imageUri;
-      const updated = await updateUser(patched);
-      if (updated) {
-        setShowEditModal(false);
-        if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(()=>{});
-      } else {
-        Alert.alert('Save failed', 'Could not update profile locally.');
-      }
-    } catch (error) {
-      console.error('Save profile error:', error);
-      Alert.alert('Error', 'An error occurred while saving your profile.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleSendNotification = async () => {
-    try {
-      // Request notification permissions
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required', 
-          'You need to enable notifications in your device settings to receive notifications.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-
-      // Schedule a local notification
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Test Notification 📱",
-          body: "This is a test notification from PrMS app!",
-          data: { testData: 'some data' },
-        },
-        trigger: null, // Show immediately
-      });
-
-      // Show success feedback
-      if (Platform.OS !== 'web') {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      
-      Alert.alert('Success', 'Test notification sent!');
-    } catch (error) {
-      console.error('Notification error:', error);
-      Alert.alert('Error', 'Failed to send notification. Please try again.');
-    }
-  };
 
   const styles = StyleSheet.create({
     container: {
@@ -177,25 +53,25 @@ export default function SettingsScreen() {
       backgroundColor: theme.colors.surface,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
-      alignItems: 'center',
+      alignItems: "center",
     },
     profileImage: {
       width: 80,
       height: 80,
       borderRadius: 40,
       backgroundColor: theme.colors.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       marginBottom: 12,
     },
     profileImageText: {
       fontSize: 32,
-      fontWeight: 'bold',
-      color: 'white',
+      fontWeight: "bold",
+      color: "white",
     },
     userName: {
       fontSize: 24,
-      fontWeight: 'bold',
+      fontWeight: "bold",
       color: theme.colors.text,
       marginBottom: 4,
     },
@@ -211,10 +87,10 @@ export default function SettingsScreen() {
       borderRadius: 12,
     },
     userTypeText: {
-      color: 'white',
+      color: "white",
       fontSize: 12,
-      fontWeight: '600',
-      textTransform: 'capitalize',
+      fontWeight: "600",
+      textTransform: "capitalize",
     },
     content: {
       flex: 1,
@@ -224,18 +100,18 @@ export default function SettingsScreen() {
       marginTop: 16,
       marginHorizontal: 16,
       borderRadius: 12,
-      overflow: 'hidden',
+      overflow: "hidden",
     },
     sectionTitle: {
       fontSize: 18,
-      fontWeight: 'bold',
+      fontWeight: "bold",
       color: theme.colors.text,
       padding: 16,
       paddingBottom: 8,
     },
     settingItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       padding: 16,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
@@ -251,7 +127,7 @@ export default function SettingsScreen() {
     },
     settingTitle: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.colors.text,
       marginBottom: 2,
     },
@@ -262,10 +138,10 @@ export default function SettingsScreen() {
     settingValue: {
       fontSize: 14,
       color: theme.colors.primary,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     themeOptions: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 12,
       padding: 16,
     },
@@ -274,9 +150,9 @@ export default function SettingsScreen() {
       backgroundColor: theme.colors.background,
       borderRadius: 8,
       padding: 12,
-      alignItems: 'center',
+      alignItems: "center",
       borderWidth: 2,
-      borderColor: 'transparent',
+      borderColor: "transparent",
     },
     themeOptionSelected: {
       borderColor: theme.colors.primary,
@@ -289,7 +165,7 @@ export default function SettingsScreen() {
     },
     themeOptionText: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.colors.text,
     },
     upgradeButton: {
@@ -298,12 +174,12 @@ export default function SettingsScreen() {
       marginTop: 8,
       borderRadius: 12,
       padding: 16,
-      alignItems: 'center',
+      alignItems: "center",
     },
     upgradeButtonText: {
-      color: 'white',
+      color: "white",
       fontSize: 16,
-      fontWeight: 'bold',
+      fontWeight: "bold",
     },
     signOutButton: {
       backgroundColor: theme.colors.error,
@@ -311,12 +187,12 @@ export default function SettingsScreen() {
       marginTop: 8,
       borderRadius: 12,
       padding: 16,
-      alignItems: 'center',
+      alignItems: "center",
     },
     signOutButtonText: {
-      color: 'white',
+      color: "white",
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     notificationButton: {
       backgroundColor: theme.colors.primary,
@@ -324,116 +200,160 @@ export default function SettingsScreen() {
       marginTop: 8,
       borderRadius: 12,
       padding: 16,
-      alignItems: 'center',
+      alignItems: "center",
     },
     notificationButtonText: {
-      color: 'white',
+      color: "white",
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
     },
   });
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+  // Handlers and helpers
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const handleUpgrade = () => {
+    // Placeholder for upgrade logic
+    alert("Upgrade to premium coming soon!");
+  };
+
+  const handleSendNotification = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Test Notification",
+        body: "This is a test notification!",
+      },
+      trigger: null,
+    });
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      await updateUser({
+        name: editName,
+        email: editEmail,
+        profilePicture: imageUri,
+      });
+      setShowEditModal(false);
+    } catch (e) {
+      alert("Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.profileImage} onPress={handleEditProfile}>
-          {user?.profilePicture ? (
-            <Image source={{ uri: user.profilePicture }} style={{ width: 80, height: 80, borderRadius: 40 }} />
-          ) : (
-            <Text style={styles.profileImageText}>{getInitials(user?.name || 'User')}</Text>
-          )}
-        </TouchableOpacity>
-        <Text style={styles.userName}>{user?.name}</Text>
-        <Text style={styles.userEmail}>{user?.email}</Text>
-        <View style={styles.userType}>
-          <Text style={styles.userTypeText}>
-            {user?.userType} - {user?.subscriptionTier}
-          </Text>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView>
         {/* Profile Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profile</Text>
-          <TouchableOpacity style={styles.settingItem} onPress={handleEditProfile}>
-            <Ionicons
-              name="person-outline"
-              size={24}
-              color={theme.colors.primary}
-              style={styles.settingIcon}
-            />
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Edit Profile</Text>
-              <Text style={styles.settingSubtitle}>Update your personal information</Text>
+        <View style={styles.header}>
+          <View style={styles.profileImage}>
+            {/* Avatar or initials */}
+            <Text style={styles.profileImageText}>
+              {user?.name ? user.name[0].toUpperCase() : "?"}
+            </Text>
+          </View>
+          <Text style={styles.userName}>{user?.name}</Text>
+          <Text style={styles.userEmail}>{user?.email}</Text>
+          {user?.userType && (
+            <View style={styles.userType}>
+              <Text style={styles.userTypeText}>{user.userType}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+          )}
+          <View style={{ height: 12 }} />
+          <TouchableOpacity onPress={() => setShowEditModal(true)}>
+            <Text style={{ color: theme.colors.primary, fontWeight: "600" }}>
+              Edit Profile
+            </Text>
           </TouchableOpacity>
         </View>
 
-        <Modal visible={showEditModal} animationType="slide" onRequestClose={() => setShowEditModal(false)}>
-          <View style={[styles.container, { padding: 20 }]}> 
-            <Text style={[styles.sectionTitle, { paddingTop: 0 }]}>Edit Profile</Text>
-            <TouchableOpacity onPress={pickImage} style={{ alignSelf: 'center', marginVertical: 12 }}>
-              {imageUri ? (
-                <Image source={{ uri: imageUri }} style={{ width: 120, height: 120, borderRadius: 60 }} />
-              ) : (
-                <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ color: 'white', fontSize: 36 }}>{getInitials(editName || 'U')}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-
-            <TextInput
-              value={editName}
-              onChangeText={setEditName}
-              placeholder="Full name"
+        {/* Edit Profile Modal */}
+        <Modal visible={showEditModal} animationType="slide" transparent>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "#0008",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View
               style={{
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-                padding: 12,
-                borderRadius: 8,
-                marginBottom: 12,
-                color: theme.colors.text,
+                backgroundColor: theme.colors.surface,
+                padding: 24,
+                borderRadius: 16,
+                width: "85%",
               }}
-              placeholderTextColor={theme.colors.textSecondary}
-            />
-
-            <TextInput
-              value={editEmail}
-              onChangeText={setEditEmail}
-              placeholder="Email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              style={{
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-                padding: 12,
-                borderRadius: 8,
-                marginBottom: 12,
-                color: theme.colors.text,
-              }}
-              placeholderTextColor={theme.colors.textSecondary}
-            />
-
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Pressable onPress={() => setShowEditModal(false)} style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: theme.colors.border, alignItems: 'center' }}>
-                <Text style={{ color: theme.colors.text }}>Cancel</Text>
-              </Pressable>
-              <Pressable onPress={handleSaveProfile} disabled={isSaving} style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: theme.colors.primary, alignItems: 'center' }}>
-                <Text style={{ color: 'white' }}>{isSaving ? 'Saving...' : 'Save'}</Text>
-              </Pressable>
+            >
+              <Text
+                style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}
+              >
+                Edit Profile
+              </Text>
+              <TextInput
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Name"
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  padding: 12,
+                  borderRadius: 8,
+                  marginBottom: 12,
+                  color: theme.colors.text,
+                }}
+                placeholderTextColor={theme.colors.textSecondary}
+              />
+              <TextInput
+                value={editEmail}
+                onChangeText={setEditEmail}
+                placeholder="Email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  padding: 12,
+                  borderRadius: 8,
+                  marginBottom: 12,
+                  color: theme.colors.text,
+                }}
+                placeholderTextColor={theme.colors.textSecondary}
+              />
+              <View style={{ flexDirection: "row", gap: 12 }}>
+                <TouchableOpacity
+                  onPress={() => setShowEditModal(false)}
+                  style={{
+                    flex: 1,
+                    padding: 12,
+                    borderRadius: 8,
+                    backgroundColor: theme.colors.border,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: theme.colors.text }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleSaveProfile}
+                  disabled={isSaving}
+                  style={{
+                    flex: 1,
+                    padding: 12,
+                    borderRadius: 8,
+                    backgroundColor: theme.colors.primary,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "white" }}>
+                    {isSaving ? "Saving..." : "Save"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-
           </View>
         </Modal>
 
@@ -466,44 +386,44 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>App Settings</Text>
           <View style={styles.settingItem}>
-            <Ionicons
-              name="notifications-outline"
-              size={24}
-              color={theme.colors.primary}
-              style={styles.settingIcon}
-            />
+            <View style={styles.settingIcon} />
             <View style={styles.settingContent}>
               <Text style={styles.settingTitle}>Notifications</Text>
-              <Text style={styles.settingSubtitle}>Receive push notifications</Text>
+              <Text style={styles.settingSubtitle}>
+                Receive push notifications
+              </Text>
             </View>
             <Switch
               value={notifications}
               onValueChange={setNotifications}
-              trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+              trackColor={{
+                false: theme.colors.border,
+                true: theme.colors.primary,
+              }}
               thumbColor="white"
             />
           </View>
-          <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]} onPress={handleSendNotification}>
-            <Ionicons
-              name="send-outline"
-              size={24}
-              color={theme.colors.primary}
-              style={styles.settingIcon}
-            />
+          <TouchableOpacity
+            style={[styles.settingItem, styles.settingItemLast]}
+            onPress={handleSendNotification}
+          >
+            <View style={styles.settingIcon} />
             <View style={styles.settingContent}>
               <Text style={styles.settingTitle}>Send Test Notification</Text>
-              <Text style={styles.settingSubtitle}>Send a test notification to your device</Text>
+              <Text style={styles.settingSubtitle}>
+                Send a test notification to your device
+              </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
         {/* Subscription */}
-        {user?.subscriptionTier === 'free' && (
-          <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgrade}>
-            <Text style={styles.upgradeButtonText}>
-              ⭐ Upgrade to Premium
-            </Text>
+        {user?.subscriptionTier === "free" && (
+          <TouchableOpacity
+            style={styles.upgradeButton}
+            onPress={handleUpgrade}
+          >
+            <Text style={styles.upgradeButtonText}>⭐ Upgrade to Premium</Text>
           </TouchableOpacity>
         )}
 
